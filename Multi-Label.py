@@ -147,7 +147,6 @@ def stemText(text):
 df['Book_Text'] = df['Book_Text'].str.lower()
 df['Book_Text'] = df['Book_Text'].apply(removePunct).apply(removeStopWords)#.apply(stemText)
 
-
 # Train-Test Split ============================================================
 from sklearn.model_selection import train_test_split
 train, test = train_test_split(df, random_state=42, test_size=0.30, shuffle=True)
