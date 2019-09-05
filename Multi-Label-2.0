@@ -1,3 +1,12 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Fri Aug 16 12:46:25 2019
+
+@author: Eli
+"""
+
+
+    
 # Import Libraries
 import matplotlib.pyplot as plt
 import json
@@ -32,6 +41,7 @@ from sqlitedict import SqliteDict
 import time
 
 # Importing the Data ==========================================================
+print("importing data...")
 books = json.load(gzip.open(r'C:\Users\Eli\Desktop\Python\THR\books.json.gz', "rt", encoding="utf-8"))
 df = pd.DataFrame(books)
 pd.set_option('display.max_colwidth', -1)
@@ -43,7 +53,7 @@ for item in imageIter:
     imageList.append(item)
     
 # Putting the Data in a Format That is Easy to Work With ======================
-
+print("formatting data...")
 #create the lists I need
 pages=[]
 genrePresent=[]
@@ -124,21 +134,42 @@ for urlGroup in urlList:
     imageWordList.append(tempString)
     tempString = ""
 
-#the image urls has a bunch of meta data (dates taken and camera used) that we want to remove
-metadata=re.compile("\S*\d+\S*|[Cc]annon|[Nn]ikon]") #numbers and the names of some cameras
-#testList = ["cannon is the best cam3ra brand 33-22-01", "what up boys", 
-    #             "finna say he11o", "daNikon bot is pop1n"]
+#remove non-english words and some camera metadata
+metadata=re.compile("\S*\d+\S*|[Cc]anon|[Nn]ikon]")
+nltk.download('words')
+words = set(nltk.corpus.words.words())
+
 temp = []
 for i in imageWordList: 
     i = re.sub(metadata, "", i)
+    i = " ".join(w for w in nltk.wordpunct_tokenize(sent) \
+              if w.lower() in words or not w.isalpha())
     temp.append(i)
 imageWordList = temp
 
-#combine the book text and image words 
+#take just the image titles
+imageTitles = []
+for i in imageWordList:
+    temp = []
+    i = i.split() 
+    x = 0
+    for elem in i:
+        x += 1
+        if x >= 9: #Found that most titles dont go beyond 8 words
+            break
+        if re.search("by|By|for|For", elem):#Title by John Doe
+            break
+        temp.append(elem)
+        if re.search("\W", elem):#Title - John Doe
+            break
+    temp = " ".join(temp)
+    imageTitles.append(temp)
+
+#combine the book text and titles 
 i = 0
 textAndWords = []
 for text in bookList:
-    textAndWords.append(text + " " + imageWordList[i])
+    textAndWords.append(text + " " + imageTitles[i])
 
 #make it one big data frame
 df = pd.DataFrame(
@@ -170,6 +201,7 @@ df = df[df.Genre_Present == 1]
 df = df.drop("Genre_Present", axis=1)
 
 # Clean text ==================================================================
+print("cleaning text...")
 def removePunct(text):
    result = re.sub(r'[?|!|\'|"|#]',r'',text)
    result = re.sub(r'[.|,|)|(|\|/]',r'',result)
@@ -197,6 +229,7 @@ df['Book_Text'] = df['Book_Text'].str.lower()
 df['Book_Text'] = df['Book_Text'].apply(removePunct).apply(removeStopWords).apply(stemText)
 
 # Train-Test Split ============================================================
+print("setting up a neural network...")
 from sklearn.model_selection import train_test_split
 train, test = train_test_split(df, test_size=0.30, shuffle=True)
 
@@ -246,4 +279,3 @@ for genre in genres:
         print("\n")
         print('Overall average test accuracy is {}'.format(totalAcc))
     print("\n")
-
