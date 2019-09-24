@@ -69,7 +69,7 @@ for x in pages:
     urlList.append(temp)
     
 #add the words asociated with the images to the book text
-metadata=re.compile("\S*\d+\S*|[Cc]anon|[Nn]ikon]")
+metadata = re.compile("\S*\d+\S*|[Cc]anon|[Nn]ikon]")
 words = set(nltk.corpus.words.words())
 
 def Convert(tup, di): 
